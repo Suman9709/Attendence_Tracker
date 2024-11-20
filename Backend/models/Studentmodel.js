@@ -1,3 +1,5 @@
+// import { type } from "os";
+
 const mongoose = require("mongoose");
 
 
@@ -10,8 +12,13 @@ const studentSchema = new mongoose.Schema({
         type: String,
         require: true,
     },
-    dob:{
-        type:Date,
+    dob: {
+        type: Date,
+        require: true,
+    },
+    gender:{
+        type:String,
+        enum:['Male','Female'],
         require:true,
     },
     studentcontact: {
@@ -34,15 +41,18 @@ const studentSchema = new mongoose.Schema({
         type: String,
         require: true,
     },
-    username:{
-        type:String,
-        require:true,
+    username: {
+        type: String,
+        require: true,
     },
-    password:{
-        type:String,
-        require:true,
+    password: {
+        type: String,
+        require: true,
     },
-
+    address: {
+        type: String,
+        require: true,
+    },
 });
 
 export const Student = mongoose.model("Student", studentSchema);
