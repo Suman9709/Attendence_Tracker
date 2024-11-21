@@ -1,6 +1,6 @@
 // import { type } from "os";
 
-const mongoose = require("mongoose");
+import mongoose from "mongoose";
 
 
 const studentSchema = new mongoose.Schema({
@@ -55,4 +55,5 @@ const studentSchema = new mongoose.Schema({
     },
 });
 
-export const Student = mongoose.model("Student", studentSchema);
+// export const Student = mongoose.model("Student", studentSchema);
+export const Student = mongoose.model("Student", studentSchema)

@@ -1,5 +1,4 @@
-const mongoose = require('mongoose');
-
+import mongoose from "mongoose";
 const instituteSchema = new mongoose.Schema({
     name: {
         type: String,

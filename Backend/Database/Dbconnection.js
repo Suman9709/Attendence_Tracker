@@ -1,4 +1,4 @@
-const mongoose = require("mongoose")
+import mongoose from "mongoose";
 
  const dbconnection = async() => {
     // mongoose.connect(process.env.MONGO_URI, {
@@ -21,4 +21,4 @@ const mongoose = require("mongoose")
 process.exit(1)        
     }
 }
-module.exports=dbconnection
+export default dbconnection;

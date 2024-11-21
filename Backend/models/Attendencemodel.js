@@ -1,4 +1,4 @@
-const mongoose = require("mongoose");
+import mongoose from "mongoose";
 
 const attendenceSchema = new mongoose.Schema({
     studentId: {
@@ -18,4 +18,4 @@ const attendenceSchema = new mongoose.Schema({
     },
 });
 
-export const Attendence = mongoose.model("Attendence", attendenceSchema);
+export const Attendance = mongoose.model("Attendance", attendenceSchema);
