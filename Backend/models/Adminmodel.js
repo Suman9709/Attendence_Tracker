@@ -19,12 +19,15 @@ const adminSchema = new mongoose.Schema({
     type: String,
     require: true,
   },
+  refreshToken:{
+    type:String,
+  }
 });
 
-adminSchema.pre("save", async function () {
-  if (!this.isModified("password")) return nextTick();
+adminSchema.pre("save", async function (next) {
+  if (!this.isModified("password")) return next();
 
-  this.password = bcrypt.hash(this.password, 10);
+  this.password = await bcrypt.hash(this.password, 10);
   return next();
 });
 
