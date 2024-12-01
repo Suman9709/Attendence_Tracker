@@ -1,24 +1,27 @@
 import { asyncHandler } from "../utils/asyncHandle.js";
 import { ApiError } from '../utils/ApiError.js'
-// import {User} from '../models/userModel.js'
 import { Admin } from '../models/Adminmodel.js'
-// import {uploadOnCloudinary} from '../utils/cloudinary.js'
 import { ApiResponse } from '../utils/ApiResponse.js'
-
 
 const generateAccessandRefreshToken = async (userId) => {
     try {
-        const admin = Admin.findById(userId);
-        const accessToken = admin.generateAccessToken();
-        const refreshToken = admin.generateRefreshToken();
-        admin.refreshToken = refreshToken
-        await admin.save({ validateBeforeSave: false })
-        return { refreshToken, accessToken }
+        const admin = await Admin.findById(userId);
+        if (!admin) {
+            throw new ApiError(404, "Admin not found"); // ✅ Added null check for `admin`.
+        }
 
+        const accessToken = admin.generateAccessToken(); // ✅ Now safe because `admin` is guaranteed to exist.
+        const refreshToken = admin.generateRefreshToken(); // ✅ Safe after null check.
+
+        admin.refreshToken = refreshToken;
+        await admin.save({ validateBeforeSave: false });
+
+        return { refreshToken, accessToken };
     } catch (error) {
-        throw new ApiError(500, "Something went wrong while generating refresh tkon and access token")
+        console.error("Error in token generation:", error); // ✅ Added logging for debugging.
+        throw new ApiError(500, "Something went wrong while generating refresh token and access token");
     }
-}
+};
 
 const registerUser = asyncHandler(async (req, res) => {
     // res.status(200).json({
@@ -35,67 +38,8 @@ const registerUser = asyncHandler(async (req, res) => {
     // check for user creation
     // return response
 
-
-    // const {name,email,username,password,role} = req.body
-    // console.log("email", email);
-
-
-    // if(
-    //     [name, email, username, password, role].some((field)=>
-    //     field?.trim() === "")
-    // ){
-    //     throw new ApiError(400, "all fields are required")
-
-    // }
-    //     const existedUser = await User.findOne({
-    //         $or: [{email}, {username}]
-    //     })
-    //     if(existedUser){
-    //         throw new ApiError(409, "User with tbis email or username already exist")
-    //     }
-    // const avatarLocalPath = req.files?.avatar[0]?.path;
-    // const coverImageLocalPath = req.files?.coverImage[0]?.path;
-
-
-    // if(!avatarLocalPath){
-    //     throw new ApiError(400, "Avatar file is require");
-    // }
-
-    // const avatar = await uploadOnCloudinary(avatarLocalPath)
-    //  const coverImage = await uploadOnCloudinary(coverImageLocalPath)    
-
-    // if(!avatar){
-    //     throw new ApiError(400, "Avatar file is require ")
-    // }
-
-    // const user = await User.create({
-    //     name,
-    //     avatar:avatar.url,
-    //     coverImage:coverImage?.url || "",
-    //     email,
-    //     password,
-    //     username:username.toLowerCase(), 
-    // })
-    // const createdUser = await User.findById(user._id).select(
-    //     "-password -refreshToken"
-    // )
-
-    // if(!createdUser){
-    //     throw new ApiError(500, "Some thing went wrong while registering user");
-    // }
-
-    // return res.status(201).json(
-    //     new ApiResponse(200, createdUser, "User registered successfully")
-    // )
-
-    // })
-
-
-
-
-
     const { name, email, username, password } = req.body
-
+    console.log("email", email);
     if (
         [name, email, username, password].some((field) =>
             field?.trim() === "")
@@ -146,7 +90,7 @@ const loginUser = asyncHandler(async (req, res) => {
 
     const { username, email, password } = req.body;
 
-    if (!username || !email) {
+    if (!(username || email)) {
         throw new ApiError(400, "Username or email is required");
     }
 
@@ -157,7 +101,7 @@ const loginUser = asyncHandler(async (req, res) => {
         throw new ApiError(404, "Admin does not exist")
     }
 
-    const ispasswordValid = await username.isPasswordcorrect(password)
+    const ispasswordValid = await admin.isPasswordcorrect(password)
     if (!ispasswordValid) {
         throw new ApiError(401, " Invalid credentials");
     }
@@ -202,8 +146,8 @@ const logOutUser = asyncHandler(async(req,res)=>{
     }
 
     return res.status(200)
-    .clearCookies("accessToken", options)
-    .clearCookies("refreshToken", options)
+    .clearCookie("accessToken", options)
+    .clearCookie("refreshToken", options)
     .json(new ApiResponse(200,{}, "Admin Loggedout Successfully"))
 })
 

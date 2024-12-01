@@ -18,7 +18,7 @@ router.route("/register").post(upload.fields([
 router.route("/login").post(loginUser)
 
 
-router.route("./logout").post(verifyJWT, logOutUser)
+router.route("/logout").post(verifyJWT, logOutUser)
 
 
 export default router

@@ -36,6 +36,7 @@ adminSchema.methods.isPasswordcorrect = async function (password) {
 };
 
 adminSchema.methods.generateAccessToken = function () {
+  const expiresIn =  process.env.JWT_ACCESS_TOKEN_EXPIRES || '5h'
   return jwt.sign(
     {
       _id: this._id,
@@ -44,20 +45,22 @@ adminSchema.methods.generateAccessToken = function () {
       username: this.username,
     },
     process.env.JWT_ACCESS_TOKEN_SECRET,
-    {
-      expiresIn: process.env.JWT_ACCESS_TOKEN_EXPIRES,
-    }
+    
+      // expiresIn: process.env.JWT_ACCESS_TOKEN_EXPIRES,
+      {expiresIn}
+    
   );
 };
 
 adminSchema.methods.generateRefreshToken = function () {
+  const expiresIn = process.env.REFRESH_TOKEN_EXPIRES || '7d'
   return jwt.sign(
     {
       id: this._id,
     },
     process.env.REFRESH_TOKEN_SECRET,
     {
-      expiresIn: process.env.REFRESH_TOKEN_EXPIRES,
+      expiresIn,
     }
   );
 };
