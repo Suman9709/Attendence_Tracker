@@ -2,6 +2,7 @@ import { asyncHandler } from "../utils/asyncHandle.js";
 import { ApiError } from '../utils/ApiError.js'
 import { Admin } from '../models/Adminmodel.js'
 import { ApiResponse } from '../utils/ApiResponse.js'
+import jwt from 'jsonwebtoken'
 
 const generateAccessandRefreshToken = async (userId) => {
     try {
@@ -83,7 +84,7 @@ const registerUser = asyncHandler(async (req, res) => {
 const loginUser = asyncHandler(async (req, res) => {
     // req.body->data
     // username /email validate
-    // finr the user
+    // find the user
     // password check
     //access and refresh token
     //send cookies
@@ -129,31 +130,134 @@ const loginUser = asyncHandler(async (req, res) => {
 
 });
 
-const logOutUser = asyncHandler(async(req,res)=>{
+const logOutUser = asyncHandler(async (req, res) => {
     await Admin.findOneAndUpdate(
-        req.admin._id,{
-            $set:{refreshToken:undefined}
-        },
+        req.admin._id, {
+        $set: { refreshToken: undefined }
+    },
         {
-            new:true
+            new: true
         }
 
     )
 
     const options = {
-        httpOnly:true,
-        secure:true,
+        httpOnly: true,
+        secure: true,
     }
 
     return res.status(200)
-    .clearCookie("accessToken", options)
-    .clearCookie("refreshToken", options)
-    .json(new ApiResponse(200,{}, "Admin Loggedout Successfully"))
+        .clearCookie("accessToken", options)
+        .clearCookie("refreshToken", options)
+        .json(new ApiResponse(200, {}, "Admin Loggedout Successfully"))
+})
+
+const refreshAccessToken = asyncHandler(async (req, res) => {
+    const incomingRefreshToken = req.cookie || req.body.refreshToken
+    if (!incomingRefreshToken) {
+        throw new ApiError(401, "Unauthorised request");
+    }
+    try {
+        const decodedToken = jwt.verify(
+            incomingRefreshToken,
+            process.env.REFRESH_TOKEN_SECRET
+        )
+        const admin = await Admin.findById(decodedToken?._id)
+
+        if (!admin) {
+            throw new ApiError(401, "Invalid refresh token");
+        }
+
+        if (incomingRefreshToken !== admin?.refreshToken) {
+            throw new ApiError(401, " refresh token is used or expires");
+        }
+
+        const options = {
+            httpOnly: true,
+            secure: true,
+        }
+        const { accessToken, newrefreshToken } = await generateAccessandRefreshToken(admin._id);
+
+
+        return res
+            .status(200)
+            .cookie("accessToken", accessToken, options)
+            .cookie("refreshToken", newrefreshToken, options)
+            .json(
+                new ApiResponse(
+                    200,
+                    { accessToken, refreshToken: newrefreshToken },
+                    "Access Token refreshe"
+                )
+            )
+
+    } catch (error) {
+        throw new ApiError(401, error?.message || "Invalid refresh token")
+    }
+})
+
+
+
+const changeCurrentPassword = asyncHandler(async(req,res)=>{
+    const{oldPassword, newPassword} = req.body
+
+    const admin = await Admin.findById(req.admin?._id);
+    const isPasswordcorrect = await admin.isPasswordcorrect(oldPassword);
+    if(!isPasswordcorrect){
+        throw new ApiError(400, "Invalid Old Password")
+    }
+
+    admin.password= newPassword;
+    await admin.save({validateBeforeSave:false})
+
+
+    return res
+    .status(200)
+    .json(
+        new ApiResponse(
+            200, {}, "Password change successfully"
+        )
+    )
+})
+
+
+const getCurrentAdmin = asyncHandler(async(req,res)=>{
+    return res
+    .status(200)
+    .json(200, req.admin, "current admin fetch successfully")
+})
+
+
+const updateAccountDetails = asyncHandler(async(req,res)=>{
+    const {name,email} = req.body
+
+    if(!name || !email){
+        throw new ApiError(400,"All fields are require")
+    }
+
+    const admin = Admin.findByIdAndUpdate(
+        req.admin?._id,{
+            $set:{
+                name:name,
+                email:email
+            }
+        },
+        {new:true}
+    ).select("-password")
+return res
+.status(200
+    .json( new ApiResponse(200,admin, "Account details updated successfully"))
+)
+
 })
 
 export {
     registerUser,
     loginUser,
     logOutUser,
+    refreshAccessToken,
+    changeCurrentPassword,
+    getCurrentAdmin,
+    updateAccountDetails
 
 }

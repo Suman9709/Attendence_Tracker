@@ -68,8 +68,4 @@ instituteSchema.methods.generateRefreshToken = function () {
     );
 };
 
-
-
-
-
 export const Institute = mongoose.model("Institute", instituteSchema);

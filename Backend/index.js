@@ -1,5 +1,3 @@
-// const express = require('express');
-// import express from "express";
 import dotenv from 'dotenv';
 import Dbconnection from './Database/Dbconnection.js'
 import cors from 'cors';
